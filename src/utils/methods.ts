@@ -1,7 +1,9 @@
 import { client } from "./client";
 import { ANILIST_BASEURL, ANIME_QUERY, HIANIME_BASEURL } from "./constant";
-import { load } from "cheerio";
+import { HiAnime } from "aniwatch";
 import match from "string-similarity-js";
+
+const hianime = new HiAnime.Scraper();
 
 // fetchAnilistInfo and call hianmie endpoints and return info with eps from hianime
 export const fetchAnilistInfo = async (id: number) => {
@@ -44,74 +46,74 @@ export const fetchAnilistInfo = async (id: number) => {
 // search with title in hianime and call ep scraping func
 export const searchNScrapeEPs = async (searchTitle: Title) => {
   try {
-    const resp = await client.get(
-      `${HIANIME_BASEURL}/search?keyword=${searchTitle.english}`
-    );
-    if (!resp) return console.log("No response from hianime !");
-    const $ = load(resp.data);
-    let similarTitles: { id: string; title: string; similarity: number }[] = [];
-    $(".film_list-wrap > .flw-item .film-detail .film-name a")
-      .map((i, el) => {
-        const title = $(el).text();
-        const id = $(el).attr("href")!.split("/").pop()?.split("?")[0] ?? "";
-        const similarity = Number(
-          (
-            match(
-              title.replace(/[\,\:]/g, ""),
-              searchTitle.english || searchTitle.native
-            ) * 10
-          ).toFixed(2)
-        );
-        similarTitles.push({ id, title, similarity });
-      })
-      .get();
+    const searchQuery = searchTitle.romaji;
+    const searchResults = await hianime.search(searchQuery);
+    console.log("Search results for:", searchQuery, searchResults);
+
+    if (!searchResults || !searchResults.animes || searchResults.animes.length === 0) {
+      console.log("No results found for:", searchQuery);
+      return null;
+    }
+
+    let similarTitles: { id: string; name: string; similarity: number }[] = [];
+    
+    searchResults.animes.forEach((anime) => {
+      if (!anime.id || !anime.jname) return;
+      
+      const similarity = Number(
+        (
+          match(
+            anime.jname.replace(/[\,\:]/g, ""),
+            searchQuery
+          ) * 10
+        ).toFixed(2)
+      );
+      similarTitles.push({ id: anime.id, name: anime.jname, similarity });
+    });
 
     similarTitles.sort((a, b) => b.similarity - a.similarity);
 
-    if (
-      (searchTitle.english.match(/\Season(.+?)\d/) &&
-      similarTitles[0].title.match(/\Season(.+?)\d/)) || (!searchTitle.english.match(/\Season(.+?)\d/) && !similarTitles[0].title.match(/\Season(.+?)\d/))
-    )
-      return getEpisodes(similarTitles[0].id);
-    else return getEpisodes(similarTitles[1].id);
+    const selectedAnime = similarTitles[0];
+    if (!selectedAnime) {
+      console.log("No matching anime found");
+      return null;
+    }
+
+    return getEpisodes(selectedAnime.id);
   } catch (err) {
     console.error(err);
     return null;
   }
 };
 
-// calls ep watch endpoint in hianmie and scrapes all eps and returns them in arr
+// calls ep watch endpoint in hianmie and returns episodes
 export const getEpisodes = async (animeId: string) => {
   try {
-    const resp = await client.get(
-      `${HIANIME_BASEURL}/ajax/v2/episode/list/${animeId.split("-").pop()}`,
-      {
-        headers: {
-          referer: `${HIANIME_BASEURL}/watch/${animeId}`,
-          "X-Requested-With": "XMLHttpRequest",
-        },
-      }
-    );
-    const $ = load(resp.data.html);
-    let episodesList: {
+    const episodesData = await hianime.getEpisodes(animeId);
+
+    if (!episodesData || !episodesData.episodes) {
+      console.log("No episodes found for animeId:", animeId);
+      return null;
+    }
+
+    const episodesList: {
       id: string;
-      episodeId: number;
+      episodeId: string;
       title: string;
       number: number;
-    }[] = [];
-    $("#detail-ss-list div.ss-list a").each((i, el) => {
-      episodesList.push({
-        id: $(el).attr("href")?.split("/").pop() ?? "",
-        episodeId: Number($(el).attr("href")?.split("?ep=").pop()),
-        title: $(el).attr("title") ?? "",
-        number: i + 1,
-      });
-    });
+    }[] = episodesData.episodes
+      .filter((ep) => ep.episodeId)
+      .map((ep) => ({
+        id: ep.episodeId || "",
+        episodeId: ep.episodeId || "",
+        title: ep.title || "",
+        number: ep.number,
+      }));
 
     return episodesList;
   } catch (err) {
     console.error(err);
-    return { episodesList: null };
+    return null;
   }
 };
 
