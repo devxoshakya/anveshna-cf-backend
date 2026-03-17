@@ -89,17 +89,19 @@ export async function RequestHandler({ response }: { response: HonoRequest }) {
     };
 
     const headerProfiles: Record<string, string>[] = [
-      headers,
-      { ...fallbackHeaders, ...(ref ? { Referer: ref } : {}) },
       minimalHeaders,
+      { ...fallbackHeaders, ...(ref ? { Referer: ref } : {}) },
+      headers,
     ];
 
     let fetchedResponse: Response | null = null;
+    const attemptedStatuses: number[] = [];
     for (const profile of headerProfiles) {
       fetchedResponse = await fetch(targetUrl, {
         ...fetchOptions,
         headers: profile,
       });
+      attemptedStatuses.push(fetchedResponse.status);
       if (fetchedResponse.status !== 204 && fetchedResponse.status !== 403) {
         break;
       }
@@ -110,12 +112,31 @@ export async function RequestHandler({ response }: { response: HonoRequest }) {
       throw new Error("Failed to fetch target URL");
     }
 
+    if (fetchedResponse.status === 204) {
+      return new Response(
+        JSON.stringify({
+          message: "Upstream returned no content",
+          error:
+            "Target CDN returned 204 for all proxy attempts from worker network",
+          url: targetUrl,
+          attempts: attemptedStatuses,
+        }),
+        {
+          status: 502,
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders,
+          },
+        }
+      );
+    }
+
     if (fetchedResponse.status === 403) {
       return new Response(
         JSON.stringify({
           message: "Access denied by target server",
           error: "The streaming server returned a 403 Forbidden error",
-          headers,
+          attempts: attemptedStatuses,
         }),
         {
           status: 403,
