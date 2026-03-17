@@ -24,6 +24,21 @@ const requiredHeaders: Record<string, string> = {
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
 };
 
+const fallbackHeaders: Record<string, string> = {
+  Accept: "*/*",
+  "Accept-Language": "en-US,en;q=0.9",
+  origin: "https://megacloud.tv",
+  Referer: "https://megacloud.tv/",
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+};
+
+const minimalHeaders: Record<string, string> = {
+  Accept: "*/*",
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+};
+
 const normalizeTargetUrl = (inputUrl: string, requestUrl: string) => {
   let candidate = inputUrl;
 
@@ -73,9 +88,27 @@ export async function RequestHandler({ response }: { response: HonoRequest }) {
       method: "GET",
     };
 
-    const fetchedResponse = await fetch(targetUrl, fetchOptions).finally(() =>
-      clearTimeout(timeoutId)
-    );
+    const headerProfiles: Record<string, string>[] = [
+      headers,
+      { ...fallbackHeaders, ...(ref ? { Referer: ref } : {}) },
+      minimalHeaders,
+    ];
+
+    let fetchedResponse: Response | null = null;
+    for (const profile of headerProfiles) {
+      fetchedResponse = await fetch(targetUrl, {
+        ...fetchOptions,
+        headers: profile,
+      });
+      if (fetchedResponse.status !== 204 && fetchedResponse.status !== 403) {
+        break;
+      }
+    }
+    clearTimeout(timeoutId);
+
+    if (!fetchedResponse) {
+      throw new Error("Failed to fetch target URL");
+    }
 
     if (fetchedResponse.status === 403) {
       return new Response(
