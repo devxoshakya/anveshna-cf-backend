@@ -8,6 +8,18 @@ import { RequestHandler, corsHeaders } from "./handler/request";
 const app = new Hono();
 const hianime = new HiAnime.Scraper();
 
+// CORS middleware for all routes
+app.use("*", async (c, next) => {
+  if (c.req.method === "OPTIONS") {
+    return c.body(null, 204, corsHeaders);
+  }
+  await next();
+  c.header("Access-Control-Allow-Origin", "*");
+  c.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  c.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  c.header("Access-Control-Max-Age", "3600");
+});
+
 app.get("/", async (c) => {
   return c.json({
     about: `This API maps anilist anime to ${HIANIME_BASEURL} and also returns the M3U8 links !`,
@@ -20,10 +32,6 @@ app.get("/", async (c) => {
       "/fetch?url={target_url}",
     ],
   });
-});
-
-app.options("/fetch", (c) => {
-  return c.body(null, 204, corsHeaders);
 });
 
 app.get("/anime/info/:id", async (c) => {
