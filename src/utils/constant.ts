@@ -17,6 +17,9 @@ export const ANIME_QUERY = `query ($id: Int) {
   Media(id: $id, type: ANIME) {
     id
     idMal
+    synonyms
+    isLicensed
+    isAdult
     title {
       romaji
       english
@@ -57,7 +60,17 @@ export const ANIME_QUERY = `query ($id: Int) {
       month
       day
     }
+    endDate {
+      year
+      month
+      day
+    }
     countryOfOrigin
+    studios(isMain: true) {
+      nodes {
+        name
+      }
+    }
     recommendations(sort: RATING_DESC) {
       edges {
         node {
@@ -116,6 +129,7 @@ export const ANIME_QUERY = `query ($id: Int) {
       edges {
         role
         node {
+          id
           name {
             first
             middle
@@ -130,6 +144,8 @@ export const ANIME_QUERY = `query ($id: Int) {
           }
         }
         voiceActors(sort: FAVOURITES_DESC) {
+          id
+          languageV2
           name {
             first
             middle

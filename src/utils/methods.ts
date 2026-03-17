@@ -5,6 +5,15 @@ import match from "string-similarity-js";
 
 const hianime = new HiAnime.Scraper();
 
+const mapStatus = (status: string) => {
+  if (status === "FINISHED") return "Completed";
+  if (status === "RELEASING") return "Ongoing";
+  if (status === "NOT_YET_RELEASED") return "Not Yet Released";
+  if (status === "CANCELLED") return "Cancelled";
+  if (status === "HIATUS") return "Hiatus";
+  return status;
+};
+
 // fetchAnilistInfo and call hianmie endpoints and return info with eps from hianime
 export const fetchAnilistInfo = async (id: number) => {
   try {
@@ -22,15 +31,45 @@ export const fetchAnilistInfo = async (id: number) => {
     const data = resp.data.data.Media;
 
     const eps = await searchNScrapeEPs(data.title);
+    const currentEpisode = data.nextAiringEpisode?.episode
+      ? Math.max(0, data.nextAiringEpisode.episode - 1)
+      : null;
+
     infoWithEp = {
       ...data,
+      malId: data.idMal,
+      image: data.coverImage.extraLarge,
+      imageHash: "hash",
+      color: data.coverImage.color,
+      cover: data.bannerImage,
+      coverHash: "hash",
+      rating: data.averageScore,
+      type: data.format,
+      releaseDate: data.seasonYear,
+      totalEpisodes: data.episodes,
+      currentEpisode,
+      subOrDub: "sub",
+      status: mapStatus(data.status),
+      trailer: data.trailer
+        ? {
+            ...data.trailer,
+            thumbnailHash: "hash",
+          }
+        : null,
+      studios: data.studios.nodes.map((studio) => studio.name),
+      nextAiringEpisode: data.nextAiringEpisode
+        ? {
+            ...data.nextAiringEpisode,
+            airingTime: data.nextAiringEpisode.airingAt,
+          }
+        : null,
       recommendations: data.recommendations.edges.map((el) => {
         const recommendation = el.node.mediaRecommendation;
         return {
           id: recommendation.id,
           malId: recommendation.idMal,
           title: recommendation.title,
-          status: recommendation.status,
+          status: mapStatus(recommendation.status),
           episodes: recommendation.episodes,
           image: recommendation.coverImage.extraLarge,
           imageHash: "hash",
@@ -47,7 +86,7 @@ export const fetchAnilistInfo = async (id: number) => {
           relationType: el.relationType,
           malId: relation.idMal,
           title: relation.title,
-          status: relation.status,
+          status: mapStatus(relation.status),
           episodes: relation.episodes,
           image: relation.coverImage.extraLarge,
           imageHash: "hash",
@@ -59,10 +98,20 @@ export const fetchAnilistInfo = async (id: number) => {
         };
       }),
       characters: data.characters.edges.map((el) => ({
+        id: el.node.id,
         role: el.role,
-        ...el.node,
-        voiceActors: el.voiceActors,
+        name: el.node.name,
+        image: el.node.image.large,
+        imageHash: "hash",
+        voiceActors: el.voiceActors.map((actor) => ({
+          id: actor.id,
+          language: actor.languageV2,
+          name: actor.name,
+          image: actor.image.large,
+          imageHash: "hash",
+        })),
       })),
+      episodes: eps ?? [],
       episodesList: eps,
     };
 

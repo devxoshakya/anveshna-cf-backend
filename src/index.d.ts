@@ -9,6 +9,9 @@ interface AnilistAnime {
   Media: {
     id: number;
     idMal: number;
+    synonyms: string[];
+    isLicensed: boolean;
+    isAdult: boolean;
     title: {
       romaji: string;
       english: string;
@@ -40,7 +43,7 @@ interface AnilistAnime {
     popularity: number;
     averageScore: number;
     trailer: {
-      id: number;
+      id: string;
       site: string;
       thumbnail: string;
     };
@@ -49,7 +52,17 @@ interface AnilistAnime {
       month: number;
       day: number;
     };
+    endDate: {
+      year: number | null;
+      month: number | null;
+      day: number | null;
+    };
     countryOfOrigin: string;
+    studios: {
+      nodes: {
+        name: string;
+      }[];
+    };
     recommendations: {
       edges: {
         node: {
@@ -108,6 +121,7 @@ interface AnilistAnime {
       edges: {
         role: string;
         node: {
+          id: number;
           name: {
             first: string;
             middle: string;
@@ -122,6 +136,8 @@ interface AnilistAnime {
           };
         };
         voiceActors: {
+          id: number;
+          languageV2: string;
           name: {
             first: string;
             middle: string;
