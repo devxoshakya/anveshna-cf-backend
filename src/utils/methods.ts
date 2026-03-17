@@ -24,10 +24,40 @@ export const fetchAnilistInfo = async (id: number) => {
     const eps = await searchNScrapeEPs(data.title);
     infoWithEp = {
       ...data,
-      recommendations: data.recommendations.edges.map(
-        (el) => el.node.mediaRecommendation
-      ),
-      relations: data.relations.edges.map((el) => ({ id: el.id, ...el.node })),
+      recommendations: data.recommendations.edges.map((el) => {
+        const recommendation = el.node.mediaRecommendation;
+        return {
+          id: recommendation.id,
+          malId: recommendation.idMal,
+          title: recommendation.title,
+          status: recommendation.status,
+          episodes: recommendation.episodes,
+          image: recommendation.coverImage.extraLarge,
+          imageHash: "hash",
+          cover: recommendation.bannerImage,
+          coverHash: "hash",
+          rating: recommendation.averageScore,
+          type: recommendation.format,
+        };
+      }),
+      relations: data.relations.edges.map((el) => {
+        const relation = el.node;
+        return {
+          id: relation.id,
+          relationType: el.relationType,
+          malId: relation.idMal,
+          title: relation.title,
+          status: relation.status,
+          episodes: relation.episodes,
+          image: relation.coverImage.extraLarge,
+          imageHash: "hash",
+          color: relation.coverImage.color,
+          type: relation.format,
+          cover: relation.bannerImage,
+          coverHash: "hash",
+          rating: relation.averageScore,
+        };
+      }),
       characters: data.characters.edges.map((el) => ({
         role: el.role,
         ...el.node,

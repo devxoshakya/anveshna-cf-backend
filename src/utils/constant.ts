@@ -62,12 +62,18 @@ export const ANIME_QUERY = `query ($id: Int) {
       edges {
         node {
           mediaRecommendation {
+            id
+            idMal
             title {
               romaji
               english
               native
               userPreferred
             }
+            status
+            episodes
+            bannerImage
+            averageScore
             format
             coverImage {
               extraLarge
@@ -82,13 +88,21 @@ export const ANIME_QUERY = `query ($id: Int) {
     relations {
       edges {
         id
+        relationType
         node {
+          id
+          idMal
           title {
             romaji
             english
             native
             userPreferred
           }
+          status
+          episodes
+          bannerImage
+          averageScore
+          format
           coverImage {
             extraLarge
             large

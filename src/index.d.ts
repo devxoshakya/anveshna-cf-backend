@@ -54,12 +54,18 @@ interface AnilistAnime {
       edges: {
         node: {
           mediaRecommendation: {
+            id: number;
+            idMal: number;
             title: {
               romaji: string;
               english: string;
               native: string;
               userPreferred: string;
             };
+            status: string;
+            episodes: number | null;
+            bannerImage: string;
+            averageScore: number;
             format: string;
             coverImage: {
               extraLarge: string;
@@ -74,13 +80,21 @@ interface AnilistAnime {
     relations: {
       edges: {
         id: number;
+        relationType: string;
         node: {
+          id: number;
+          idMal: number;
           title: {
             romaji: string;
             english: string;
             native: string;
             userPreferred: string;
           };
+          status: string;
+          episodes: number | null;
+          bannerImage: string;
+          averageScore: number;
+          format: string;
           coverImage: {
             extraLarge: string;
             large: string;
