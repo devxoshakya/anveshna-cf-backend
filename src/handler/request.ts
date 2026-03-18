@@ -11,8 +11,8 @@ const requiredHeaders: Record<string, string> = {
   Accept: "*/*",
   "Accept-Encoding": "gzip, deflate, br, zstd",
   "Accept-Language": "en-US,en;q=0.5",
-  origin: "https://rapid-cloud.co",
-  Referer: "https://rapid-cloud.co/",
+  origin: "https://megacloud.blog",
+  Referer: "https://aniwatchtv.to/",
   "Sec-Ch-Ua": '"Chromium";v="134", "Not:A-Brand";v="24", "Brave";v="134"',
   "Sec-Ch-Ua-Mobile": "?0",
   "Sec-Ch-Ua-Platform": '"Windows"',
@@ -21,16 +21,16 @@ const requiredHeaders: Record<string, string> = {
   "Sec-Fetch-Site": "cross-site",
   "Sec-Gpc": "1",
   "User-Agent":
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
 };
 
 const fallbackHeaders: Record<string, string> = {
   Accept: "*/*",
   "Accept-Language": "en-US,en;q=0.9",
-  origin: "https://megacloud.tv",
-  Referer: "https://megacloud.tv/",
+  origin: "https://megacloud.blog",
+  Referer: "https://hianime.to/",
   "User-Agent":
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
 };
 
 const minimalHeaders: Record<string, string> = {
